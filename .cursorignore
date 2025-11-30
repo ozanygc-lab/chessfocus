@@ -1,0 +1,7 @@
+# Ignore .env files but allow .env.local
+# First, ignore all .env files
+.env
+.env.*
+# Then, explicitly allow .env.local
+!.env.local
+

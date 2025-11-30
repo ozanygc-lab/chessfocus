@@ -2078,35 +2078,16 @@ const ErrorMessage: React.FC<ErrorMessageProps> = ({ message }) => (
 // --- TAB 1: GAME ANALYSIS ---
 
 const GameAnalysisTab: React.FC = () => {
+  const [source, setSource] = useState<AnalysisSource>('LINK');
   const [inputContent, setInputContent] = useState('');
   const [status, setStatus] = useState<ReportStatus>('idle');
   const [report, setReport] = useState<GameReport | null>(null);
   const [gamePgn, setGamePgn] = useState<string | null>(null);
   const [inputError, setInputError] = useState('');
+  const [showMobileGuide, setShowMobileGuide] = useState(false);
   const [showPgnGuide, setShowPgnGuide] = useState(false);
   const [selectedHighlight, setSelectedHighlight] = useState<SelectedHighlight>(null);
   const [playerSide, setPlayerSide] = useState<'White' | 'Black' | null>(null); // Côté choisi par l'utilisateur
-
-  // Fonction pour détecter automatiquement si l'input est un lien ou un PGN
-  const detectInputType = (input: string): 'url' | 'pgn' => {
-    const trimmed = input.trim();
-    
-    // Si ça ressemble à une URL (contient http://, https://, ou des domaines connus)
-    if (trimmed.includes('http://') || trimmed.includes('https://') || 
-        trimmed.includes('lichess.org') || trimmed.includes('chess.com') ||
-        /^[a-z0-9]{8,}$/i.test(trimmed)) {
-      return 'url';
-    }
-    
-    // Si ça ressemble à un PGN (contient [Event, [White, [Black, ou des coups comme 1.e4)
-    if (trimmed.includes('[Event') || trimmed.includes('[White') || trimmed.includes('[Black') ||
-        /^\d+\./.test(trimmed) || trimmed.includes('1.')) {
-      return 'pgn';
-    }
-    
-    // Par défaut, on considère que c'est un PGN si c'est long, sinon un lien
-    return trimmed.length > 100 ? 'pgn' : 'url';
-  };
   
   // Set default selection when report is loaded
   useEffect(() => {
@@ -2132,7 +2113,7 @@ const GameAnalysisTab: React.FC = () => {
   const handleAnalyze = useCallback(async () => {
     setInputError("");
     if (!isInputValid) {
-      setInputError("Veuillez coller un lien ou un PGN.");
+      setInputError(source === "PGN" ? "Veuillez coller le PGN." : "Veuillez coller un lien.");
       return;
     }
 
@@ -2140,10 +2121,8 @@ const GameAnalysisTab: React.FC = () => {
     setReport(null);
     
     try {
-      // Détecter automatiquement le type d'input
-      const inputType = detectInputType(inputContent);
       const body =
-        inputType === "pgn"
+        source === "PGN"
           ? { sourceType: "pgn", pgn: inputContent }
           : { sourceType: "url", link: inputContent };
 
@@ -2186,7 +2165,7 @@ const GameAnalysisTab: React.FC = () => {
       setStatus("error");
       setInputError("Une erreur est survenue lors de l'analyse. Veuillez réessayer.");
     }
-  }, [isInputValid, inputContent]);
+  }, [isInputValid, source, inputContent]);
 
   const getResultCategory = (result: string, analyzedSide: 'White' | 'Black'): 'result-win' | 'result-draw' | 'result-loss' => {
     if (result === '1-0') return analyzedSide === 'White' ? 'result-win' : 'result-loss';
@@ -2197,77 +2176,55 @@ const GameAnalysisTab: React.FC = () => {
   return (
     <div className="space-y-6">
       <SectionTitle>Source de la partie</SectionTitle>
-      
-      <div className="space-y-2">
-        <label className="block text-sm font-medium text-slate-300">
-          Lien / PGN
-        </label>
-        <textarea
-          value={inputContent}
-          onChange={(e) => { setInputContent(e.target.value); setInputError(''); }}
-          rows={6}
-          placeholder="Collez ici un lien Lichess/Chess.com ou le PGN complet de votre partie..."
-          className="w-full p-4 rounded-lg bg-slate-900/60 text-slate-200 border border-white/10 focus:border-emerald-400/50 focus:ring-emerald-400/20"
-          disabled={status === 'loading'}
-        />
-        <button
-          type="button"
-          onClick={() => setShowPgnGuide(!showPgnGuide)}
-          className="mt-2 text-xs text-sky-400 hover:text-sky-300 cursor-pointer inline-flex items-center gap-1"
-        >
-          {showPgnGuide ? (
-            <>
-              ❌ Masquer le guide
-            </>
-          ) : (
-            <>
-              📋 Comment copier le lien ou le PGN de ta partie ?
-            </>
-          )}
-        </button>
-        {showPgnGuide && (
+      <div className="inline-flex rounded-full bg-slate-900/70 p-1 border border-white/10">
+        {['Lien (Lichess / Chess.com)', 'PGN'].map((label, index) => {
+          const currentSource: AnalysisSource = index === 0 ? 'LINK' : 'PGN';
+          const isActive = source === currentSource;
+          return (
+            <button
+              key={label}
+              onClick={() => { setSource(currentSource); setInputContent(''); setInputError(''); }}
+              className={isActive
+                ? "px-5 py-2 rounded-full text-sm sm:text-base font-semibold bg-emerald-400 text-slate-950 shadow-[0_12px_30px_rgba(16,185,129,0.55)] transition-all"
+                : "px-5 py-2 rounded-full text-sm sm:text-base font-medium text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors"
+              }
+            >
+              {label}
+            </button>
+          );
+        })}
+      </div>
+
+      {source === 'PGN' ? (
+        <>
+          <textarea
+            value={inputContent}
+            onChange={(e) => { setInputContent(e.target.value); setInputError(''); }}
+            rows={6}
+            placeholder="Collez ici le PGN complet de votre partie..."
+            className="w-full p-4 rounded-lg bg-slate-900/60 text-slate-200 border border-white/10 focus:border-emerald-400/50 focus:ring-emerald-400/20"
+            disabled={status === 'loading'}
+          />
+          <button
+            type="button"
+            onClick={() => setShowPgnGuide(!showPgnGuide)}
+            className="mt-2 text-xs text-sky-400 hover:text-sky-300 cursor-pointer inline-flex items-center gap-1"
+          >
+            {showPgnGuide ? (
+              <>
+                ❌ Masquer le guide PGN
+              </>
+            ) : (
+              <>
+                📋 Comment copier le PGN de ta partie ?
+              </>
+            )}
+          </button>
+          {showPgnGuide && (
             <div className="mt-3 p-4 rounded-xl bg-slate-900/70 border border-slate-700 text-sm text-slate-200">
-              <h4 className="text-base font-semibold text-slate-100 mb-3">📋 Copier le lien ou le PGN de ta partie</h4>
+              <h4 className="text-base font-semibold text-slate-100 mb-3">📋 Copier le PGN de ta partie</h4>
               
               <div className="space-y-4">
-                {/* Section Liens */}
-                <div>
-                  <h5 className="text-xs font-semibold uppercase tracking-wide text-slate-400 mt-2 mb-2">🔗 Copier un lien</h5>
-                  
-                  <div className="mb-3">
-                    <h6 className="text-xs font-semibold text-slate-300 mb-1">Chess.com – Application mobile</h6>
-                    <ul className="list-disc list-inside text-slate-300 space-y-1 text-xs ml-2">
-                      <li>Ouvre l'app Chess.com</li>
-                      <li>Va dans : Menu → Parties / Archive</li>
-                      <li>Ouvre la partie</li>
-                      <li>Appuie sur ⋯ (en haut à droite)</li>
-                      <li>Choisis "Share Game" puis "Copy Link"</li>
-                    </ul>
-                  </div>
-                  
-                  <div className="mb-3">
-                    <h6 className="text-xs font-semibold text-slate-300 mb-1">Lichess – Application mobile</h6>
-                    <ul className="list-disc list-inside text-slate-300 space-y-1 text-xs ml-2">
-                      <li>Ouvre la partie</li>
-                      <li>Appuie sur ⋯ ou "Partager"</li>
-                      <li>Choisis "Copier le lien"</li>
-                    </ul>
-                  </div>
-                  
-                  <div className="mb-3">
-                    <h6 className="text-xs font-semibold text-slate-300 mb-1">Navigateur (ordinateur)</h6>
-                    <ul className="list-disc list-inside text-slate-300 space-y-1 text-xs ml-2">
-                      <li>Ouvre la partie sur chess.com ou lichess.org</li>
-                      <li>Copie l'URL depuis la barre d'adresse</li>
-                    </ul>
-                  </div>
-                </div>
-                
-                {/* Section PGN */}
-                <div>
-                  <h5 className="text-xs font-semibold uppercase tracking-wide text-slate-400 mt-2 mb-2">📋 Copier le PGN</h5>
-                </div>
-                
                 {/* Chess.com - Application mobile */}
                 <div>
                   <h5 className="text-xs font-semibold uppercase tracking-wide text-slate-400 mt-2 mb-2">Chess.com – Application mobile</h5>
@@ -2323,13 +2280,76 @@ const GameAnalysisTab: React.FC = () => {
                 {/* Astuce */}
                 <div className="mt-4 p-3 rounded-lg bg-blue-500/10 border border-blue-500/30">
                   <p className="text-xs text-blue-300">
-                    <span className="font-semibold">💡 Astuce :</span> Tu peux coller soit un lien Lichess/Chess.com, soit le PGN complet de ta partie. Le système détecte automatiquement le type.
+                    <span className="font-semibold">💡 Astuce :</span> Le PGN commence généralement par <span className="font-mono text-blue-200">[Event</span> et contient tous les coups de la partie. Assure-toi de copier tout le texte du fichier.
                   </p>
                 </div>
               </div>
             </div>
           )}
-        </div>
+        </>
+      ) : (
+        <>
+          <input
+            type="text"
+            value={inputContent}
+            onChange={(e) => { setInputContent(e.target.value); setInputError(''); }}
+            placeholder="Collez l'URL de la partie (ex: lichess.org/...) "
+            className="w-full p-3 rounded-lg bg-slate-900/60 text-slate-200 border border-white/10 focus:border-emerald-400/50 focus:ring-emerald-400/20"
+            disabled={status === 'loading'}
+          />
+          <button
+            type="button"
+            onClick={() => setShowMobileGuide(!showMobileGuide)}
+            className="mt-2 text-xs text-sky-400 hover:text-sky-300 cursor-pointer inline-flex items-center gap-1"
+          >
+            {showMobileGuide ? (
+              <>
+                ❌ Masquer le guide mobile
+              </>
+            ) : (
+              <>
+                📱 Comment copier le lien de ta partie sur mobile ?
+              </>
+            )}
+          </button>
+          {showMobileGuide && (
+            <div className="mt-3 p-4 rounded-xl bg-slate-900/70 border border-slate-700 text-sm text-slate-200">
+              <h4 className="text-base font-semibold text-slate-100 mb-3">📱 Copier le lien de ta partie</h4>
+              
+              <div className="space-y-4">
+                <div>
+                  <h5 className="text-xs font-semibold uppercase tracking-wide text-slate-400 mt-2 mb-2">Chess.com – Application mobile</h5>
+                  <ul className="list-disc list-inside text-slate-300 space-y-1 text-xs">
+                    <li>Ouvre l&apos;app Chess.com</li>
+                    <li>Va dans : Menu → Parties / Archive</li>
+                    <li>Ouvre la partie</li>
+                    <li>Appuie sur ⋯ (en haut à droite)</li>
+                    <li>Choisis &quot;Share Game&quot; puis &quot;Copy Link&quot;</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h5 className="text-xs font-semibold uppercase tracking-wide text-slate-400 mt-2 mb-2">Chess.com – Navigateur mobile (Safari / Chrome)</h5>
+                  <ul className="list-disc list-inside text-slate-300 space-y-1 text-xs">
+                    <li>Ouvre la partie</li>
+                    <li>Appuie sur la barre d&apos;adresse</li>
+                    <li>Copie l&apos;URL</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h5 className="text-xs font-semibold uppercase tracking-wide text-slate-400 mt-2 mb-2">Lichess – Application mobile</h5>
+                  <ul className="list-disc list-inside text-slate-300 space-y-1 text-xs">
+                    <li>Ouvre la partie</li>
+                    <li>Appuie sur ⋯ ou &quot;Partager&quot;</li>
+                    <li>Choisis &quot;Copier le lien&quot;</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          )}
+        </>
+      )}
       {inputError && <p className="text-red-400 text-sm mt-1">{inputError}</p>}
 
       <button

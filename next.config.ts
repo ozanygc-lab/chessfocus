@@ -4,9 +4,10 @@ const nextConfig: NextConfig = {
   // Ensure App Router is used
   reactStrictMode: true,
   
-  // Redirects for common paths
+  // Redirects for common paths and old URLs
   async redirects() {
     return [
+      // Home page redirects
       {
         source: "/index",
         destination: "/",
@@ -15,6 +16,17 @@ const nextConfig: NextConfig = {
       {
         source: "/home",
         destination: "/",
+        permanent: true,
+      },
+      // Old analysis routes (if they existed)
+      {
+        source: "/analyse",
+        destination: "/analyze",
+        permanent: true,
+      },
+      {
+        source: "/analysis",
+        destination: "/analyze",
         permanent: true,
       },
     ];

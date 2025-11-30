@@ -17,10 +17,10 @@ export default function NotFound() {
         <div className="max-w-2xl w-full rounded-2xl bg-slate-900/40 border border-white/10 backdrop-blur-2xl shadow-[0_40px_120px_rgba(0,0,0,0.65)] p-8 sm:p-12">
           <h1 className="text-6xl sm:text-8xl font-bold text-emerald-400 mb-4">404</h1>
           <h2 className="text-2xl sm:text-3xl font-semibold text-white mb-4">
-            Page non trouvée
+            Page introuvable
           </h2>
           <p className="text-slate-300 mb-8 text-lg">
-            Désolé, la page que vous recherchez n'existe pas ou a été déplacée.
+            La page que tu cherches n'existe pas ou a été déplacée.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link

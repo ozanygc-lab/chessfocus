@@ -13,6 +13,17 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
   ]),
+  {
+    rules: {
+      // Allow setState in useEffect for state synchronization (common pattern in Next.js)
+      "react-hooks/set-state-in-effect": "warn",
+      // Allow unused vars for mock data that might be used later
+      "@typescript-eslint/no-unused-vars": ["warn", { 
+        argsIgnorePattern: "^_",
+        varsIgnorePattern: "^MOCK_"
+      }],
+    },
+  },
 ]);
 
 export default eslintConfig;

@@ -1,3 +1,21 @@
+/**
+ * PAGE 404 CUSTOM - Route : /_not-found (gérée automatiquement par Next.js)
+ * 
+ * Fichier : src/app/not-found.tsx
+ * 
+ * Cette page s'affiche automatiquement quand une route n'existe pas.
+ * Next.js App Router détecte automatiquement ce fichier pour gérer les 404.
+ * 
+ * POUR VERCEL :
+ * - Export par défaut requis : ✅ export default function NotFound()
+ * - Composant React valide : ✅
+ * - Route générée : /_not-found (Static, prerendered)
+ * 
+ * IMPORTANT :
+ * - Ce fichier doit s'appeler "not-found.tsx" (nom réservé par Next.js)
+ * - Doit être placé dans src/app/ pour être détecté
+ * - S'affiche automatiquement pour toutes les routes inexistantes
+ */
 import Link from "next/link";
 
 export default function NotFound() {

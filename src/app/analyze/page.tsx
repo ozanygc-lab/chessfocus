@@ -1,5 +1,23 @@
 "use client";
 
+/**
+ * PAGE D'ANALYSE - Route : /analyze
+ * 
+ * Fichier : src/app/analyze/page.tsx
+ * 
+ * Cette page contient les fonctionnalités d'analyse de parties et d'adversaires.
+ * Next.js App Router détecte automatiquement ce fichier comme la route "/analyze".
+ * 
+ * POUR VERCEL :
+ * - Export par défaut requis : ✅ export default ChessFocusPage
+ * - Composant React valide : ✅
+ * - Route générée : /analyze (Static, prerendered)
+ * 
+ * IMPORTANT :
+ * - Le dossier "analyze" dans src/app/ crée la route /analyze
+ * - Le fichier doit s'appeler "page.tsx" pour être détecté comme route
+ * - Ne pas déplacer ce fichier (doit rester dans src/app/analyze/)
+ */
 import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { Chess } from "chess.js";
 import { Chessboard } from "react-chessboard";

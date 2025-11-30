@@ -1,5 +1,22 @@
 "use client";
 
+/**
+ * PAGE D'ACCUEIL - Route : /
+ * 
+ * Fichier : src/app/page.tsx
+ * 
+ * Cette page est la page d'accueil de ChessFocus.
+ * Next.js App Router détecte automatiquement ce fichier comme la route racine "/".
+ * 
+ * POUR VERCEL :
+ * - Export par défaut requis : ✅ export default function HomePage()
+ * - Composant React valide : ✅
+ * - Route générée : / (Static, prerendered)
+ * 
+ * IMPORTANT :
+ * - Ne pas renommer ce fichier (doit rester "page.tsx")
+ * - Ne pas déplacer ce fichier (doit rester dans src/app/)
+ */
 import React from "react";
 import Link from "next/link";
 

@@ -1,4 +1,5 @@
 import { openai, OPENAI_MODEL } from "@/lib/openai";
+import { fetchChessComGamePgn } from "@/lib/chesscom";
 
 type Body =
   | { sourceType: "pgn"; pgn: string }
@@ -119,111 +120,8 @@ async function fetchLichessPgn(link: string): Promise<string> {
   }
 }
 
-async function fetchChessComPgn(link: string): Promise<string> {
-  try {
-    // Normalize the URL
-    let normalizedLink = link.trim();
-    if (!normalizedLink.startsWith("http://") && !normalizedLink.startsWith("https://")) {
-      normalizedLink = "https://" + normalizedLink;
-    }
-
-    console.log(`[Game Analyze] Attempting to fetch Chess.com PGN from: ${normalizedLink}`);
-
-    // Try multiple methods to get the PGN
-    const methods = [
-      // Method 1: Try /pgn endpoint
-      async () => {
-        const pgnUrl = normalizedLink.endsWith("/pgn") ? normalizedLink : `${normalizedLink.replace(/\/$/, "")}/pgn`;
-        console.log(`[Game Analyze] Trying Chess.com /pgn endpoint: ${pgnUrl}`);
-        const res = await fetch(pgnUrl, {
-          headers: {
-            "User-Agent": "ChessFocus/1.0",
-            Accept: "text/plain,application/x-chess-pgn",
-          },
-          next: { revalidate: 0 },
-        });
-        if (res.ok) {
-          const pgn = await res.text();
-          if (pgn && pgn.trim().length > 0 && (pgn.includes("[Event") || pgn.includes("1."))) {
-            return pgn.trim();
-          }
-        }
-        throw new Error(`Method 1 failed: ${res.status}`);
-      },
-      // Method 2: Try fetching the page and extracting PGN
-      async () => {
-        console.log(`[Game Analyze] Trying to extract PGN from Chess.com page`);
-        const res = await fetch(normalizedLink, {
-          headers: {
-            "User-Agent": "ChessFocus/1.0",
-            Accept: "text/html,application/json",
-          },
-          next: { revalidate: 0 },
-        });
-
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status}`);
-        }
-
-        const contentType = res.headers.get("content-type") || "";
-        
-        // If it's JSON, try to extract PGN
-        if (contentType.includes("application/json")) {
-          const data = await res.json();
-          if (data.pgn && typeof data.pgn === "string") {
-            return data.pgn.trim();
-          }
-        }
-
-        // If it's HTML, try to extract from the page
-        if (contentType.includes("text/html")) {
-          const html = await res.text();
-          
-          // Look for PGN in various formats
-          const pgnMatch = html.match(/\[Event[^\]]*\][\s\S]*?(?=\n\n|$)/);
-          if (pgnMatch && pgnMatch[0]) {
-            return pgnMatch[0].trim();
-          }
-
-          // Look for JSON data in script tags
-          const jsonMatch = html.match(/"pgn"\s*:\s*"([^"]+)"/);
-          if (jsonMatch && jsonMatch[1]) {
-            const decoded = jsonMatch[1].replace(/\\n/g, "\n").replace(/\\"/g, '"');
-            if (decoded.includes("[Event")) {
-              return decoded.trim();
-            }
-          }
-        }
-        throw new Error("Could not extract PGN from page");
-      },
-    ];
-
-    // Try each method
-    for (const method of methods) {
-      try {
-        const pgn = await method();
-        if (pgn && pgn.trim().length > 0) {
-          console.log(`[Game Analyze] Successfully fetched Chess.com PGN`);
-          return pgn;
-        }
-      } catch (methodError) {
-        console.warn(`[Game Analyze] Chess.com method failed:`, methodError);
-        continue;
-      }
-    }
-
-    // If all methods failed, throw a helpful error
-    throw new Error(
-      "Impossible de récupérer automatiquement le PGN depuis Chess.com. " +
-      "Veuillez copier le PGN directement depuis la page Chess.com (bouton 'Download PGN') " +
-      "et collez-le dans l'onglet PGN."
-    );
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : "Erreur inconnue";
-    console.error(`[Game Analyze] Chess.com PGN fetch error:`, errorMessage);
-    throw new Error(errorMessage);
-  }
-}
+// Note: fetchChessComPgn a été remplacé par fetchChessComGamePgn de @/lib/chesscom
+// qui est plus robuste et utilise plusieurs méthodes de fallback pour récupérer le PGN
 
 export async function POST(request: Request) {
   try {
@@ -297,7 +195,7 @@ export async function POST(request: Request) {
           pgn = await fetchLichessPgn(link);
         } else if (isChessComUrl(link)) {
           console.log("[Game Analyze] Detected Chess.com URL");
-          pgn = await fetchChessComPgn(link);
+          pgn = await fetchChessComGamePgn(link);
         } else {
           console.error("[Game Analyze] URL not recognized as Lichess or Chess.com:", link);
           return new Response(

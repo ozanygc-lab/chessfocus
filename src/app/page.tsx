@@ -19,8 +19,10 @@
  */
 import React from "react";
 import Link from "next/link";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function HomePage() {
+  const { t } = useLanguage();
   return (
     <main className="relative min-h-screen w-full overflow-hidden">
       {/* Background image */}
@@ -43,20 +45,20 @@ export default function HomePage() {
             <div className="flex flex-col justify-center">
               {/* Big brand/title */}
               <h1 className="font-hero-serif text-3xl sm:text-4xl lg:text-5xl font-semibold tracking-tight text-white mb-3">
-                ChessFocus
+                {t('home.title')}
               </h1>
 
               {/* Two subtitle lines */}
               <p className="text-base sm:text-lg text-slate-200/90 leading-relaxed">
-                Apprendre contre tes faiblesses.
+                {t('home.subtitle1')}
               </p>
               <p className="text-base sm:text-lg text-slate-200/80 leading-relaxed">
-                Apprendre contre les faiblesses de tes adversaires.
+                {t('home.subtitle2')}
               </p>
 
               {/* Small supporting line */}
               <p className="mt-4 text-xs sm:text-sm text-slate-300/80 max-w-md">
-                Analyse intelligente de tes parties & de celles de tes adversaires, pour préparer chaque match comme un joueur pro.
+                {t('home.description')}
               </p>
 
               {/* CTA button */}
@@ -68,11 +70,11 @@ export default function HomePage() {
                              hover:shadow-[0_22px_65px_rgba(16,185,129,0.7)] hover:brightness-110 hover:-translate-y-[1px]
                              transition-all duration-200"
                 >
-                  Fais-le maintenant
+                  {t('home.cta')}
                 </Link>
 
                 <span className="text-xs text-slate-300/80">
-                  Aucun compte nécessaire pour tester l'analyse.
+                  {t('home.noAccount')}
                 </span>
               </div>
             </div>
@@ -81,7 +83,7 @@ export default function HomePage() {
             <div className="h-full flex items-stretch">
               <div className="w-full rounded-xl bg-slate-900/60 border border-white/10 px-4 py-5 sm:px-5 sm:py-6 flex flex-col gap-3">
                 <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
-                  COMMENT ÇA MARCHE
+                  {t('home.howItWorks')}
                 </p>
 
                 <div className="space-y-3 text-xs sm:text-sm">
@@ -90,9 +92,9 @@ export default function HomePage() {
                       01
                     </div>
                     <div>
-                      <p className="font-medium text-slate-100 text-sm">Importe une partie</p>
+                      <p className="font-medium text-slate-100 text-sm">{t('home.step1.title')}</p>
                       <p className="text-slate-300/80 text-xs">
-                        Colle un lien Lichess ou Chess.com, ou ton PGN brut.
+                        {t('home.step1.desc')}
                       </p>
                     </div>
                   </div>
@@ -102,9 +104,9 @@ export default function HomePage() {
                       02
                     </div>
                     <div>
-                      <p className="font-medium text-slate-100 text-sm">Détecte tes faiblesses</p>
+                      <p className="font-medium text-slate-100 text-sm">{t('home.step2.title')}</p>
                       <p className="text-slate-300/80 text-xs">
-                        L'IA identifie les erreurs récurrentes dans ton jeu.
+                        {t('home.step2.desc')}
                       </p>
                     </div>
                   </div>
@@ -114,9 +116,9 @@ export default function HomePage() {
                       03
                     </div>
                     <div>
-                      <p className="font-medium text-slate-100 text-sm">Analyse ton adversaire</p>
+                      <p className="font-medium text-slate-100 text-sm">{t('home.step3.title')}</p>
                       <p className="text-slate-300/80 text-xs">
-                        Prépare un plan de jeu ciblé contre ses faiblesses.
+                        {t('home.step3.desc')}
                       </p>
                     </div>
                   </div>
@@ -126,9 +128,9 @@ export default function HomePage() {
                       04
                     </div>
                     <div>
-                      <p className="font-medium text-slate-100 text-sm">Passe à l'échiquier</p>
+                      <p className="font-medium text-slate-100 text-sm">{t('home.step4.title')}</p>
                       <p className="text-slate-300/80 text-xs">
-                        Tu joues en sachant déjà où frapper.
+                        {t('home.step4.desc')}
                       </p>
                     </div>
                   </div>

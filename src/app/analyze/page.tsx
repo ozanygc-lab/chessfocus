@@ -21,6 +21,7 @@
 import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { Chess } from "chess.js";
 import { Chessboard } from "react-chessboard";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 // Composant pour afficher les courbes ELO
 const EloChart: React.FC<{ data: EloDataPoint[] }> = ({ data }) => {
@@ -2053,15 +2054,18 @@ const Badge: React.FC<BadgeProps> = ({ children, category }) => {
   );
 };
 
-const Spinner: React.FC = () => (
+const Spinner: React.FC = () => {
+  const { t } = useLanguage();
+  return (
   <div className="flex items-center justify-center space-x-2">
     <svg className="animate-spin h-5 w-5 text-emerald-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
     </svg>
-    <span className="text-emerald-400">Analyse en cours...</span>
+      <span className="text-emerald-400">{t('game.loading')}</span>
   </div>
 );
+};
 
 interface ErrorMessageProps {
   message: string;
@@ -2078,6 +2082,7 @@ const ErrorMessage: React.FC<ErrorMessageProps> = ({ message }) => (
 // --- TAB 1: GAME ANALYSIS ---
 
 const GameAnalysisTab: React.FC = () => {
+  const { t } = useLanguage();
   const [source, setSource] = useState<AnalysisSource>('LINK');
   const [inputContent, setInputContent] = useState('');
   const [status, setStatus] = useState<ReportStatus>('idle');
@@ -2113,7 +2118,7 @@ const GameAnalysisTab: React.FC = () => {
   const handleAnalyze = useCallback(async () => {
     setInputError("");
     if (!isInputValid) {
-      setInputError(source === "PGN" ? "Veuillez coller le PGN." : "Veuillez coller un lien.");
+      setInputError(source === "PGN" ? t('game.error.pgn') : t('game.error.link'));
       return;
     }
 
@@ -2134,7 +2139,7 @@ const GameAnalysisTab: React.FC = () => {
 
       if (!res.ok) {
         console.error("Game analysis HTTP error:", res.status);
-        let errorMessage = "Une erreur est survenue lors de l'analyse.";
+        let errorMessage = t('game.error');
         try {
           const errorData = await res.json();
           if (errorData.error) {
@@ -2142,7 +2147,7 @@ const GameAnalysisTab: React.FC = () => {
           }
         } catch (parseError) {
           // If we can't parse the error, use the status text
-          errorMessage = `Erreur ${res.status}: ${res.statusText || "Requête invalide"}`;
+          errorMessage = `${t('error')} ${res.status}: ${res.statusText || t('game.error.invalid')}`;
         }
         setStatus("error");
         setInputError(errorMessage);
@@ -2153,7 +2158,7 @@ const GameAnalysisTab: React.FC = () => {
       if (!data.report) {
         console.error("Game analysis missing report:", data);
         setStatus("error");
-        setInputError("Réponse invalide du serveur.");
+        setInputError(t('game.error.invalid'));
         return;
       }
 
@@ -2163,9 +2168,9 @@ const GameAnalysisTab: React.FC = () => {
     } catch (err) {
       console.error("Game analysis fetch error:", err);
       setStatus("error");
-      setInputError("Une erreur est survenue lors de l'analyse. Veuillez réessayer.");
+      setInputError(t('game.error.retry'));
     }
-  }, [isInputValid, source, inputContent]);
+  }, [isInputValid, source, inputContent, t]);
 
   const getResultCategory = (result: string, analyzedSide: 'White' | 'Black'): 'result-win' | 'result-draw' | 'result-loss' => {
     if (result === '1-0') return analyzedSide === 'White' ? 'result-win' : 'result-loss';
@@ -2175,9 +2180,9 @@ const GameAnalysisTab: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <SectionTitle>Source de la partie</SectionTitle>
+      <SectionTitle>{t('game.source')}</SectionTitle>
       <div className="inline-flex rounded-full bg-slate-900/70 p-1 border border-white/10">
-        {['Lien (Lichess / Chess.com)', 'PGN'].map((label, index) => {
+        {[t('game.tab.link'), t('game.tab.pgn')].map((label, index) => {
           const currentSource: AnalysisSource = index === 0 ? 'LINK' : 'PGN';
           const isActive = source === currentSource;
           return (
@@ -2197,14 +2202,14 @@ const GameAnalysisTab: React.FC = () => {
 
       {source === 'PGN' ? (
         <>
-          <textarea
-            value={inputContent}
-            onChange={(e) => { setInputContent(e.target.value); setInputError(''); }}
-            rows={6}
-            placeholder="Collez ici le PGN complet de votre partie..."
-            className="w-full p-4 rounded-lg bg-slate-900/60 text-slate-200 border border-white/10 focus:border-emerald-400/50 focus:ring-emerald-400/20"
-            disabled={status === 'loading'}
-          />
+        <textarea
+          value={inputContent}
+          onChange={(e) => { setInputContent(e.target.value); setInputError(''); }}
+          rows={6}
+            placeholder={t('game.input.pgn.placeholder')}
+          className="w-full p-4 rounded-lg bg-slate-900/60 text-slate-200 border border-white/10 focus:border-emerald-400/50 focus:ring-emerald-400/20"
+          disabled={status === 'loading'}
+        />
           <button
             type="button"
             onClick={() => setShowPgnGuide(!showPgnGuide)}
@@ -2212,11 +2217,11 @@ const GameAnalysisTab: React.FC = () => {
           >
             {showPgnGuide ? (
               <>
-                ❌ Masquer le guide PGN
+                ❌ {t('game.pgnGuide.hide')}
               </>
             ) : (
               <>
-                📋 Comment copier le PGN de ta partie ?
+                📋 {t('game.pgnGuide.mobile')}
               </>
             )}
           </button>
@@ -2289,14 +2294,14 @@ const GameAnalysisTab: React.FC = () => {
         </>
       ) : (
         <>
-          <input
-            type="text"
-            value={inputContent}
-            onChange={(e) => { setInputContent(e.target.value); setInputError(''); }}
-            placeholder="Collez l'URL de la partie (ex: lichess.org/...) "
-            className="w-full p-3 rounded-lg bg-slate-900/60 text-slate-200 border border-white/10 focus:border-emerald-400/50 focus:ring-emerald-400/20"
-            disabled={status === 'loading'}
-          />
+        <input
+          type="text"
+          value={inputContent}
+          onChange={(e) => { setInputContent(e.target.value); setInputError(''); }}
+            placeholder={t('game.input.link.placeholder')}
+          className="w-full p-3 rounded-lg bg-slate-900/60 text-slate-200 border border-white/10 focus:border-emerald-400/50 focus:ring-emerald-400/20"
+          disabled={status === 'loading'}
+        />
           <button
             type="button"
             onClick={() => setShowMobileGuide(!showMobileGuide)}
@@ -2304,11 +2309,11 @@ const GameAnalysisTab: React.FC = () => {
           >
             {showMobileGuide ? (
               <>
-                ❌ Masquer le guide mobile
+                ❌ {t('game.linkGuide.hide')}
               </>
             ) : (
               <>
-                📱 Comment copier le lien de ta partie sur mobile ?
+                📱 {t('game.linkGuide.mobile')}
               </>
             )}
           </button>
@@ -2361,27 +2366,27 @@ const GameAnalysisTab: React.FC = () => {
             : 'bg-gradient-to-tr from-emerald-400 to-emerald-300 text-slate-950 hover:brightness-110 shadow-[0_18px_50px_rgba(16,185,129,0.45)]'
         }`}
       >
-        {status === 'loading' ? <Spinner /> : 'Analyser la partie'}
+        {status === 'loading' ? <Spinner /> : t('game.analyze')}
       </button>
 
       <div className="mt-8 pt-8 border-t border-slate-700">
         {status === 'idle' && (
           <p className="text-slate-400 text-center py-10">
-            Aucune analyse pour le moment. Lance une analyse pour voir les résultats.
+            {t('game.noAnalysis')}
           </p>
         )}
 
         {status === 'error' && (
-          <ErrorMessage message={inputError || "Une erreur est survenue lors de l'analyse. Veuillez vérifier votre PGN ou votre lien."} />
+          <ErrorMessage message={inputError || t('game.error')} />
         )}
 
         {status === 'success' && report && (
           <div className="space-y-10">
-            <SectionTitle>Résultats de l'analyse</SectionTitle>
+            <SectionTitle>{t('game.results')}</SectionTitle>
 
             {/* Sélecteur Blanc/Noir */}
             <div className="p-5 sm:p-6 rounded-2xl bg-slate-900/60 border border-white/10">
-              <h4 className="text-lg font-semibold text-emerald-400 mb-3">Dans cette partie, vous étiez :</h4>
+              <h4 className="text-lg font-semibold text-emerald-400 mb-3">{t('game.playerSide')}</h4>
               <div className="inline-flex rounded-full bg-slate-800/60 p-1 border border-white/10">
                 {(['White', 'Black'] as const).map((side) => {
                   const isActive = playerSide === side;
@@ -2394,14 +2399,14 @@ const GameAnalysisTab: React.FC = () => {
                         : "px-6 py-2 rounded-full text-sm sm:text-base font-medium text-slate-300 hover:text-white hover:bg-slate-700/80 transition-colors"
                       }
                     >
-                      {side === 'White' ? '⚪ Blancs' : '⚫ Noirs'}
+                      {side === 'White' ? t('game.playerSide.white') : t('game.playerSide.black')}
                     </button>
                   );
                 })}
               </div>
               {playerSide && (
                 <p className="text-sm text-slate-400 mt-3">
-                  Les exercices seront adaptés selon les erreurs des <span className="font-semibold text-emerald-400">{playerSide === 'White' ? 'Blancs' : 'Noirs'}</span>.
+                  {t('game.playerSide.exercises')} <span className="font-semibold text-emerald-400">{playerSide === 'White' ? 'Blancs' : 'Noirs'}</span>.
                 </p>
               )}
             </div>
@@ -2409,7 +2414,7 @@ const GameAnalysisTab: React.FC = () => {
             {/* Échiquier interactif avec highlights */}
             {gamePgn && (
               <div>
-                <SectionTitle>Analyse de la partie</SectionTitle>
+                <SectionTitle>{t('game.analysis')}</SectionTitle>
                 <GameBoardWithHighlights
                   pgn={gamePgn}
                   keyMoments={report.keyMoments}
@@ -2430,7 +2435,7 @@ const GameAnalysisTab: React.FC = () => {
             </div>
 
             <div>
-              <SectionTitle>Moments clés</SectionTitle>
+              <SectionTitle>{t('game.keyMoments')}</SectionTitle>
               <div className="space-y-3">
                 {report.keyMoments.map((moment, index) => {
                   const isSelected = selectedHighlight?.type === 'keyMoment' && selectedHighlight.index === index;
@@ -2469,7 +2474,7 @@ const GameAnalysisTab: React.FC = () => {
             </div>
 
             <div>
-              <SectionTitle>Erreurs & Imprécisions</SectionTitle>
+              <SectionTitle>{t('game.mistakes')}</SectionTitle>
               <div className="space-y-4">
                 {report.mistakes.map((mistake, index) => {
                   const isSelected = selectedHighlight?.type === 'mistake' && selectedHighlight.index === index;
@@ -2517,7 +2522,7 @@ const GameAnalysisTab: React.FC = () => {
             </div>
 
             <div>
-              <SectionTitle>Exercices recommandés</SectionTitle>
+              <SectionTitle>{t('game.exercises')}</SectionTitle>
               
               {!playerSide ? (
                 <div className="p-5 sm:p-6 rounded-2xl bg-slate-900/60 border border-white/10">
@@ -2918,6 +2923,7 @@ type Tab = 'game' | 'opponent';
 
 const ChessFocusPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<Tab>('game');
+  const { t } = useLanguage();
 
   return (
     <main className="relative min-h-screen w-full overflow-hidden">
@@ -2937,15 +2943,15 @@ const ChessFocusPage: React.FC = () => {
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 md:gap-6">
             <div>
               <h1 className="font-hero-serif text-3xl sm:text-4xl lg:text-5xl font-semibold tracking-tight text-white">
-                Analyse ChessFocus
+                {t('home.title')} {t('nav.analyze')}
               </h1>
               <p className="mt-2 text-sm sm:text-base text-slate-300/85 max-w-xl">
-                Analyse une partie ou prépare-toi contre un adversaire en quelques clics.
+                {t('opponent.title')} {t('home.description')}
               </p>
             </div>
             <div className="flex items-center gap-3">
               <span className="inline-flex items-center rounded-full border border-emerald-400/40 bg-emerald-400/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-200">
-                Tableau d&apos;analyse
+                {t('opponent.settings')}
               </span>
             </div>
           </div>
@@ -2960,7 +2966,7 @@ const ChessFocusPage: React.FC = () => {
                   : "px-5 py-2 rounded-full text-sm sm:text-base font-medium text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors"
                 }
               >
-                Analyser une partie
+                {t('nav.tab.game')}
               </button>
               <button
                 onClick={() => setActiveTab('opponent')}
@@ -2969,7 +2975,7 @@ const ChessFocusPage: React.FC = () => {
                   : "px-5 py-2 rounded-full text-sm sm:text-base font-medium text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors"
                 }
               >
-                Analyser un adversaire
+                {t('nav.tab.opponent')}
               </button>
             </div>
 
